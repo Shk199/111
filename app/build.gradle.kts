@@ -123,3 +123,35 @@ dependencies {
   "ksp"(libs.androidx.room.compiler)
   "ksp"(libs.moshi.kotlin.codegen)
 }
+
+// Automatically copy release artifacts to the root /Release directory with every build
+val targetReleaseDir = layout.projectDirectory.dir("../Release")
+
+tasks.register<Copy>("copyReleaseApk") {
+  group = "distribution"
+  from(layout.buildDirectory.file("outputs/apk/release/app-release.apk"))
+  into(targetReleaseDir)
+  rename { "Release.apk" }
+}
+
+tasks.register<Copy>("copyReleaseBundle") {
+  group = "distribution"
+  from(layout.buildDirectory.file("outputs/bundle/release/app-release.aab"))
+  into(targetReleaseDir)
+  rename { "Release.aab" }
+}
+
+tasks.register("exportReleaseArtifacts") {
+  group = "distribution"
+  description = "Copies release APK and AAB to root /Release directory"
+  dependsOn("copyReleaseApk", "copyReleaseBundle")
+}
+
+tasks.matching { it.name == "assembleRelease" }.configureEach {
+  finalizedBy("copyReleaseApk")
+}
+
+tasks.matching { it.name == "bundleRelease" }.configureEach {
+  finalizedBy("copyReleaseBundle")
+}
+
